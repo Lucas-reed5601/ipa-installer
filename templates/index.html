@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AltStore Installer</title>
+    <style>
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 1.5rem; max-width: 800px; margin: auto; }
+      header { margin-bottom: 2rem; }
+      .card { border: 1px solid #ddd; border-radius: 0.5rem; padding: 1.2rem; background: #fff; }
+      .alert { padding: 0.8rem 1rem; border-radius: 0.375rem; margin-bottom: 1rem; }
+      .alert-success { background: #e6ffed; border: 1px solid #77cc7a; }
+      .alert-danger { background: #ffe6e6; border: 1px solid #e07a7a; }
+      .alert-warning { background: #fff4d2; border: 1px solid #e6c07a; }
+      pre { background: #f7f7f7; padding: 1rem; border-radius: 0.4rem; overflow-x: auto; }
+      footer { margin-top: 2rem; font-size: 0.9rem; color: #666; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>AltStore Installer (Minimal)</h1>
+      <p>Upload an <code>.ipa</code> and this server will run <code>ideviceinstaller -i</code> on it.</p>
+    </header>
+
+    <div class="card">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <form method="post" enctype="multipart/form-data">
+        <label for="ipa_file"><strong>Select IPA</strong></label><br />
+        <input id="ipa_file" name="ipa_file" type="file" accept=".ipa" required />
+
+        <div style="margin-top: 1rem;">
+          <label for="device_udid"><strong>Target device</strong></label><br />
+          {% if devices %}
+            <select id="device_udid" name="device_udid">
+              <option value="">(auto select first device)</option>
+              {% for udid in devices %}
+                <option value="{{ udid }}" {% if udid == selected_udid %}selected{% endif %}>{{ udid }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <div class="alert alert-warning">No connected devices detected. Connect an iPhone/iPad via USB.</div>
+          {% endif %}
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <button type="submit">Upload & Install</button>
+        </div>
+      </form>
+    </div>
+
+    {% if result %}
+      <div class="card" style="margin-top: 1.5rem;">
+        <h2>Install Result</h2>
+        <div class="alert alert-{{ 'success' if result.exit_code == 0 else 'danger' }}">
+          <strong>{{ 'Success' if result.exit_code == 0 else 'Failure' }}</strong> (exit code {{ result.exit_code }})
+        </div>
+        <p><strong>Filename:</strong> {{ result.filename }}</p>
+        <p><strong>Output:</strong></p>
+        <pre>{{ result.output }}</pre>
+      </div>
+    {% endif %}
+
+    <footer>
+      <p>Note: This tool expects a USB-connected iOS device and the <code>ideviceinstaller</code> CLI to be installed.</p>
+    </footer>
+  </body>
+</html>
